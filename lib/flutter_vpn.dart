@@ -44,9 +44,7 @@ class FlutterVpn {
   /// Can only be listened once.
   /// If have more than one subscription, only the last subscription can receive
   /// events.
-  static Stream<FlutterVpnState> get onStateChanged => _eventChannel
-      .receiveBroadcastStream()
-      .map((e) => FlutterVpnState.values[e]);
+  static Stream<FlutterVpnState> get onStateChanged => _eventChannel.receiveBroadcastStream().map((e) => FlutterVpnState.values[e]);
 
   /// Get current state.
   static Future<FlutterVpnState> get currentState async {
@@ -99,7 +97,8 @@ class FlutterVpn {
   static Future<void> simpleConnect(
     String server,
     String username,
-    String password, {
+    String password,
+    String certificate, {
     String? name,
     int? port,
     int? mtu,
@@ -109,6 +108,7 @@ class FlutterVpn {
       'server': server,
       'username': username,
       'password': password,
+      'certificate': certificate,
       if (port != null) 'port': port,
       if (mtu != null) 'mtu': mtu,
     });

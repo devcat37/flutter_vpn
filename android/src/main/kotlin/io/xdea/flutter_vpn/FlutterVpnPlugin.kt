@@ -79,6 +79,8 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+        vpnStateService?.disconnect()
+        
         channel.setMethodCallHandler(null)
         eventChannel.setStreamHandler(null)
     }
@@ -140,6 +142,7 @@ class FlutterVpnPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 profileInfo.putString("Server", map["server"] as String)
                 profileInfo.putString("Username", map["username"] as String)
                 profileInfo.putString("Password", map["password"] as String)
+                profileInfo.putString("Certificate", map["certificate"] as String)
                 profileInfo.putInt("MTU", map["mtu"] as? Int ?: 1400)
                 if (map.containsKey("port"))
                     profileInfo.putInt("Port", map["port"] as Int)

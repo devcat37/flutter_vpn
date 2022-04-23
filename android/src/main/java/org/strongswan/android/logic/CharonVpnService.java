@@ -55,6 +55,8 @@ import org.strongswan.android.utils.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -63,13 +65,17 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.SortedSet;
 import java.util.UUID;
+import java.util.Base64;
 
 import androidx.core.app.NotificationCompat;
 
@@ -148,6 +154,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
                         profile.setPort(bundle.getInt("Port"));
                     profile.setUsername(bundle.getString("Username"));
                     profile.setPassword(bundle.getString("Password"));
+                    profile.setCertificateAlias(bundle.getString("Certificate"));
                     profile.setMTU(bundle.getInt("MTU"));
                     profile.setVpnType(VpnType.fromIdentifier(bundle.getString("VpnType")));
                     profile.setSelectedAppsHandling(0);
@@ -436,7 +443,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 //                builder.addAction(R.drawable.ic_notification_disconnect, getString(R.string.disconnect), pending);
 //            }
             if (error == ErrorState.NO_ERROR) {
-                builder.setContentText(name);
+                builder.setContentText("Your connection is safe");
             }
             builder.setPublicVersion(buildNotification(true));
         }
@@ -609,11 +616,30 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
         try {
             String alias = this.mCurrentCertificateAlias;
             if (alias != null) {
-                X509Certificate cert = certman.getCACertificateFromAlias(alias);
-                if (cert == null) {
+                try {
+                    byte[] bytes = alias.getBytes("UTF-8");
+                    String encoded = Base64.getEncoder().encodeToString(bytes);
+                    byte[] decoded = Base64.getDecoder().decode(encoded);
+
+                    InputStream in = new ByteArrayInputStream(decoded);
+
+                    CertificateFactory factory = CertificateFactory.getInstance("X.509");
+                    X509Certificate cert = (X509Certificate)factory.generateCertificate(in);
+
+                    if (cert == null) {
+                        return null;
+                    }
+
+                    Log.e("LOG", "Успешно создали сертификат!");
+
+                    certs.add(cert.getEncoded());
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
                     return null;
                 }
-                certs.add(cert.getEncoded());
+
+                
             } else {
                 for (X509Certificate cert : certman.getAllCACertificates().values()) {
                     certs.add(cert.getEncoded());
@@ -623,6 +649,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
             e.printStackTrace();
             return null;
         }
+
         return certs.toArray(new byte[certs.size()][]);
     }
 

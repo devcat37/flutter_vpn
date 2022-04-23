@@ -24,6 +24,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemClock;
+import android.util.Log;
 
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.logic.imc.ImcState;
